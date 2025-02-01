@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Mi Princesa 🥺❤️</title>
+    <style>
+        body {
+            font-family: 'Arial', cursive;
+            background: #ff99cc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .corazon {
+            font-size: 60px;
+            margin: 20px;
+            animation: latido 1s infinite;
+        }
+
+        .mensaje {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(255, 0, 102, 0.3);
+            margin: 20px;
+            max-width: 90%;
+        }
+
+        .botones {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        #si {
+            background: #ff4d88;
+            color: white;
+        }
+
+        #no {
+            background: #cccccc;
+            position: relative;
+        }
+
+        @keyframes latido {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .corazones {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .heart {
+            position: absolute;
+            color: #ff4d88;
+            animation: caer 3s linear infinite;
+        }
+
+        @keyframes caer {
+            from { top: -10%; }
+            to { top: 110%; }
+        }
+
+        /* Estilo para los controles de música */
+        .controles-musica {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 15px rgba(255, 0, 102, 0.3);
+            width: 90%;
+            max-width: 300px;
+        }
+
+        .controles-musica button {
+            background: #ff4d88;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .controles-musica button:hover {
+            background: #ff3366;
+        }
+
+        #titulo-cancion {
+            font-size: 14px;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div class="corazon">❤️🥺</div>
+    
+    <div class="mensaje">
+        <h1>Para mi peque ❤️🥺</h1>
+        <h2>¿Podemos pasar este 14 de febrero un momento muy especial juntos?</h2>
+        
+        <div class="botones">
+            <button id="si" onclick="aceptar()">¡Sí! ❤️</button>
+            <button id="no" onmouseover="moverNo()">No 😢</button>
+        </div>
+    </div>
+
+    <div class="corazones" id="corazones"></div>
+
+    <!-- Controles de música -->
+    <div class="controles-musica">
+        <button onclick="retroceder()">⏮️</button>
+        <button onclick="pausarReanudar()">⏯️</button>
+        <button onclick="avanzar()">⏭️</button>
+        <span id="titulo-cancion">Cargando...</span>
+    </div>
+
+    <!-- Reproductor de YouTube (oculto) -->
+    <iframe
+        id="reproductor"
+        src="https://www.youtube.com/embed/RiulHx9D7zM?enablejsapi=1&autoplay=1"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        style="opacity: 0; width: 0; height: 0;">
+    </iframe>
+
+    <script>
+        // Variables globales
+        let player;
+        const listaCanciones = [
+            "RiulHx9D7zM", // Canción 1
+            "IXMoZ_-9wJ0", // Canción 2
+            "VwvOgv-2SA8", // Canción 3
+            "kPa7bsKwL-c", // Canción 4
+            "Tr6oZwrnn3Q", // Canción 5
+            "1v58VsI6cJw", // Canción 6
+            "s2yN7fb16KQ", // Canción 7
+            "_gU9kX7zBxc", // Canción 8
+            "_ikdF-UaCE4", // Canción 9
+            "waKVvHdkGI8", // Canción 10
+            "PyQDyI21x6U", // Canción 11
+            "2DUo3EXa4AI", // Canción 12
+            "qaShyjYClD8"  // Canción 13
+        ];
+        let indiceCancion = 0;
+
+        // Cargar la API de YouTube
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // Crear el reproductor
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('reproductor', {
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        }
+
+        // Cuando el reproductor esté listo
+        function onPlayerReady(event) {
+            // Forzar la reproducción automática (puede requerir interacción del usuario)
+            player.playVideo();
+            actualizarTitulo();
+        }
+
+        // Cuando cambie el estado del reproductor
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                avanzar();
+            }
+        }
+
+        // Manejar errores del reproductor
+        function onPlayerError(event) {
+            console.error("Error al reproducir la canción. Saltando a la siguiente...");
+            avanzar(); // Saltar a la siguiente canción si hay un error
+        }
+
+        // Actualizar el título de la canción
+        function actualizarTitulo() {
+            const titulo = player.getVideoData().title;
+            document.getElementById('titulo-cancion').textContent = titulo || "Título no disponible";
+        }
+
+        // Controles de música
+        function retroceder() {
+            indiceCancion = (indiceCancion - 1 + listaCanciones.length) % listaCanciones.length;
+            player.loadVideoById(listaCanciones[indiceCancion]);
+            setTimeout(actualizarTitulo, 1000); // Esperar un segundo para actualizar el título
+        }
+
+        function avanzar() {
+            indiceCancion = (indiceCancion + 1) % listaCanciones.length;
+            player.loadVideoById(listaCanciones[indiceCancion]);
+            setTimeout(actualizarTitulo, 1000); // Esperar un segundo para actualizar el título
+        }
+
+        function pausarReanudar() {
+            if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        }
+
+        // (Mantén las funciones anteriores de aceptar() y moverNo())
+        function aceptar() {
+            alert("¡Eres la mejor persona de mi vida! ❤️ Prepararé algo increíble para nosotros 😘");
+        }
+
+        function moverNo() {
+            const botonNo = document.getElementById('no');
+            const x = Math.random() * (window.innerWidth - botonNo.offsetWidth);
+            const y = Math.random() * (window.innerHeight - botonNo.offsetHeight);
+            botonNo.style.transform = `translate(${x}px, ${y}px)`;
+            crearCorazon();
+        }
+
+        function crearCorazon() {
+            const corazones = document.getElementById('corazones');
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDuration = (Math.random() * 2 + 1) + 's';
+            corazones.appendChild(heart);
+            
+            setTimeout(() => heart.remove(), 3000);
+        }
+
+        // Forzar la interacción del usuario para activar la reproducción
+        document.body.addEventListener('click', () => {
+            player.playVideo();
+        });
+    </script>
+</body>
+</html>
